@@ -35,6 +35,11 @@ function! s:GetConfig(name, default)
   return exists(name) ? eval(name) : a:default
 endfunction
 
+function! s:SetConfig(name, value)
+  let name = 'g:vim_project_'.a:name
+  exec("let " . name . "=" . a:value)
+endfunction
+
 function! s:GetConfigPath(prefix)
   let prefix = a:prefix
   if prefix[len(prefix)-1] != '/'
@@ -181,13 +186,30 @@ endfunction
 
 " Call this entry function first
 function! project#begin()
-  command -nargs=1 ProjectBase call s:SetBase(<args>)
-  command -nargs=1 Project call s:AddProject(<args>)
-  command -nargs=1 ProjectIgnore call s:IgnoreProject(<args>)
-
+  call s:loadPlugin()
   call s:SourcePluginConfigFiles()
   call s:WatchOnBufEnter()
 endfunction
+
+" only load plugin
+function! project#init()
+  call s:loadPlugin()
+endfunction
+
+function! project#load()
+   let s:load = s:GetConfig('tiny_load', 0)
+   if !s:load
+       call s:SetConfig('tiny_load', 1)
+       call s:SourcePluginConfigFiles()
+   endif
+endfunction
+
+function! s:loadPlugin()
+  command -nargs=1 ProjectBase call s:SetBase(<args>)
+  command -nargs=1 Project call s:AddProject(<args>)
+  command -nargs=1 ProjectIgnore call s:IgnoreProject(<args>)
+endfunction
+
 
 function! s:SourcePluginConfigFiles()
   let add_file = s:config_path.'/'.s:add_file
